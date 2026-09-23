@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Pipeline data (downloaded/generated, not committed — see workflow for how the
+# built feed is published instead of stored in git history)
+data/raw/*
+data/interim/*
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+
+# Keep built feeds out of normal commits; the release workflow attaches the
+# zip as a release/artifact rather than committing binary blobs.
+data/gtfs/*.zip
+
+.env
+.DS_Store
