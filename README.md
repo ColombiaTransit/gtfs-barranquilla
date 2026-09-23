@@ -60,6 +60,7 @@ separate CI step, not part of this pipeline (see above).
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+playwright install --with-deps chromium   # transmetro.gov.co needs a real browser -- see below
 
 gtfsbaq fetch       # download raw sources into data/raw/
 gtfsbaq transform   # build GTFS-shaped tables into data/interim/
@@ -71,6 +72,19 @@ gtfsbaq all
 docker run --rm -v "$(pwd)/data/gtfs:/gtfs" -v "$(pwd)/validation-report:/report" \
   ghcr.io/mobilitydata/gtfs-validator:latest -i /gtfs/gtfs.zip -o /report --country_code CO
 ```
+
+**Why Playwright:** transmetro.gov.co is a client-side-rendered React app.
+Confirmed directly (comparing a real browser's raw HTTP response against
+what gets parsed): the server's actual response for every page is just an
+empty `<div id="app"></div>` plus a script tag -- the route tables and
+schedule text only exist in the DOM *after* that script executes and
+renders them client-side. Plain `requests` (even with full browser headers)
+can only ever see that empty shell, so `sources/transmetro.py` fetches
+route pages with a headless Chromium instead and hands the *rendered* HTML
+to the same parsing functions, which don't care how the HTML arrived. The
+one exception is the KML fetch (Google's My Maps export endpoint) -- a
+plain static file, not a Transmetro page, so that one small request still
+uses `requests` directly.
 
 ## Adding or fixing a source
 
