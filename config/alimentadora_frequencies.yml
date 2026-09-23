@@ -1,0 +1,233 @@
+# Real per-route headways for feeder (alimentadora) routes, split by service
+# day type -- the only actual frequency/headway source found for this
+# pipeline (see the three separately-scraped 2026 PDFs in the README for
+# *operating windows*, which give no headways at all).
+#
+# SOURCES (all uploaded directly by the user; none reachable by this
+# pipeline's own fetch stage -- see the "how this file gets used" note in
+# frequency_reference.py):
+#   weekday:  HORARIO_FUNCIONAMIENTO_ALIMENTADORAS_HABILES_10_DE_ENE_2023_6882e4b44f.pdf
+#             filename says "10 DE ENE 2023", but the document's own title
+#             text says "Vigente desde el Lunes 22 de Enero de 2024" --
+#             internally inconsistent; treated as the 2024 date.
+#   saturday: HORARIO_FUNCIONAMIENTO_ALIMENTADORAS_SABADO_14_DE_ENE_2023_95865fef57.pdf
+#             "Vigente desde el Sábado 27 de Enero de 2024"
+#   sunday:   HORARIO_FUNCIONAMIENTO_ALIMENTADORAS_DOM_Y_FES_15_DE_ENE_2023_ef1d6874ea.pdf
+#             "Vigente desde el Domingo 28 de Enero de 2024"
+# All three are the same one-week rollout (22, 27, 28 Jan 2024) and, as of
+# 2026-09, the user confirmed no newer versions of these specific frequency
+# tables exist.
+#
+# COVERAGE, on purpose narrower than the rest of the feed:
+#   - Alimentadora (feeder) routes ONLY. None of the three source PDFs has
+#     a troncal (trunk) section -- confirmed via `pdfinfo` (1 page each)
+#     and the extracted text. Troncal routes always use the placeholder
+#     headway, on every service day.
+#   - A route not listed under a given day (including any alimentadora
+#     route not in that day's table at all) keeps the placeholder headway
+#     for that day specifically -- for example A9-4 doesn't appear in ANY
+#     of these three 2024 tables (it may not have existed as a route yet;
+#     the separately-scraped 2026 pages show it as weekend-only), so it
+#     gets the placeholder on every service day.
+#   - "Gran Malecón" appears in the Saturday/Sunday tables with real data,
+#     but isn't a route code the routes with an "A" or "U" prefix pattern
+#     this file's matching logic handles, and it's also flagged suspended
+#     ("suspendida temporalmente") on the currently-scraped listing page,
+#     so it's deliberately left out here rather than adding matching logic
+#     for a route that's excluded from the build by default anyway.
+#
+# FORMAT: under each day, a route code (exactly as printed in that day's
+# source PDF, matched via frequency_reference.py:normalize_route_code) maps
+# to an ordered list of time bands. Most routes have one to three bands
+# (a full-day figure, or mañana/valle/tarde peak-period figures); where a
+# source PDF visually merges adjacent bands into one wider cell sharing a
+# single frequency (confirmed by rendering the actual page image, not
+# assumed from column position alone -- see U30's Saturday entry below),
+# that's represented as one band spanning the full merged period.
+#
+# Two routes were "–" (no service) in the weekday table and are omitted
+# from it: A5-6, and A9-4 (see A9-4's note above). A5-6 is also absent from
+# the Saturday and Sunday tables. A9-4 is absent from all three.
+
+weekday:
+  routes:
+    A1-2: [{start: "05:10", end: "22:13", headway_minutes: 12}]
+    A1-3: [{start: "05:07", end: "22:31", headway_minutes: 12}]
+    A1-4: [{start: "05:10", end: "22:30", headway_minutes: 13}]
+    A2-1:
+      - {start: "04:30", end: "08:00", headway_minutes: 10}
+      - {start: "08:00", end: "16:00", headway_minutes: 13}
+      - {start: "16:00", end: "22:30", headway_minutes: 11}
+    A3-1: [{start: "05:00", end: "22:34", headway_minutes: 17}]
+    A3-2:
+      - {start: "04:30", end: "08:00", headway_minutes: 7}
+      - {start: "08:00", end: "15:30", headway_minutes: 11}
+      - {start: "15:30", end: "22:30", headway_minutes: 8}
+    A3-3:
+      - {start: "04:30", end: "08:00", headway_minutes: 6}
+      - {start: "08:00", end: "16:00", headway_minutes: 9}
+      - {start: "16:00", end: "22:30", headway_minutes: 6}
+    A3-4:
+      - {start: "04:30", end: "08:00", headway_minutes: 5}
+      - {start: "08:00", end: "15:30", headway_minutes: 8}
+      - {start: "15:30", end: "22:30", headway_minutes: 4}
+    A3-41: [{start: "04:45", end: "22:42", headway_minutes: 12}]
+    A5-1:
+      - {start: "05:00", end: "08:00", headway_minutes: 6}
+      - {start: "08:00", end: "15:30", headway_minutes: 11}
+      - {start: "15:30", end: "22:30", headway_minutes: 7}
+    A5-2: [{start: "05:10", end: "22:36", headway_minutes: 11}]
+    A5-3:
+      - {start: "05:00", end: "08:00", headway_minutes: 5}
+      - {start: "08:00", end: "15:30", headway_minutes: 8}
+      - {start: "15:30", end: "22:30", headway_minutes: 5}
+    A5-4:  # merged mañana+valle band -- no separate morning-peak figure in the source
+      - {start: "05:00", end: "15:30", headway_minutes: 12}
+      - {start: "15:30", end: "22:30", headway_minutes: 9}
+    A5-5:
+      - {start: "05:00", end: "08:00", headway_minutes: 6}
+      - {start: "08:00", end: "15:30", headway_minutes: 12}
+      - {start: "15:30", end: "22:30", headway_minutes: 6}
+    A6-5: [{start: "05:20", end: "22:30", headway_minutes: 10}]
+    A6-6: [{start: "05:00", end: "22:31", headway_minutes: 10}]
+    A7-1:
+      - {start: "05:00", end: "09:00", headway_minutes: 7}
+      - {start: "09:00", end: "15:00", headway_minutes: 12}
+      - {start: "15:00", end: "22:00", headway_minutes: 9}
+    A7-3:
+      - {start: "05:00", end: "11:00", headway_minutes: 12}
+      - {start: "11:00", end: "19:00", headway_minutes: 14}
+      - {start: "19:00", end: "22:00", headway_minutes: 12}
+    A7-4:  # merged mañana+valle band, same pattern as A5-4
+      - {start: "05:00", end: "15:00", headway_minutes: 11}
+      - {start: "15:00", end: "22:00", headway_minutes: 14}
+    A8-1:
+      - {start: "05:00", end: "09:00", headway_minutes: 6}
+      - {start: "09:00", end: "15:00", headway_minutes: 11}
+      - {start: "15:00", end: "22:00", headway_minutes: 9}
+    A8-2:
+      - {start: "05:00", end: "09:00", headway_minutes: 5}
+      - {start: "09:00", end: "15:00", headway_minutes: 13}
+      - {start: "15:00", end: "22:00", headway_minutes: 8}
+    A8-3:
+      - {start: "05:00", end: "08:30", headway_minutes: 7}
+      - {start: "08:30", end: "15:30", headway_minutes: 11}
+      - {start: "15:30", end: "21:30", headway_minutes: 9}
+    A9-3:
+      - {start: "05:00", end: "09:00", headway_minutes: 6}
+      - {start: "09:00", end: "15:00", headway_minutes: 11}
+      - {start: "15:00", end: "22:00", headway_minutes: 9}
+    U30:
+      - {start: "05:00", end: "15:00", headway_minutes: 8}
+      - {start: "15:00", end: "20:30", headway_minutes: 10}
+      - {start: "20:30", end: "22:00", headway_minutes: 9}
+
+saturday:
+  routes:
+    A1-2: [{start: "05:15", end: "22:14", headway_minutes: 12}]
+    A1-3:
+      - {start: "05:15", end: "14:00", headway_minutes: 11}
+      - {start: "14:00", end: "22:30", headway_minutes: 14}
+    A1-4: [{start: "05:15", end: "22:30", headway_minutes: 14}]
+    A2-1:
+      - {start: "04:30", end: "14:00", headway_minutes: 12}
+      - {start: "14:00", end: "18:30", headway_minutes: 14}
+      - {start: "18:30", end: "22:30", headway_minutes: 12}
+    A3-1: [{start: "05:00", end: "22:34", headway_minutes: 19}]
+    A3-2:
+      - {start: "04:30", end: "08:00", headway_minutes: 8}
+      - {start: "08:00", end: "22:30", headway_minutes: 11}
+    A3-3:
+      - {start: "04:30", end: "08:00", headway_minutes: 6}
+      - {start: "08:00", end: "15:30", headway_minutes: 10}
+      - {start: "15:30", end: "22:30", headway_minutes: 7}
+    A3-4:
+      - {start: "04:30", end: "08:30", headway_minutes: 5}
+      - {start: "08:30", end: "15:30", headway_minutes: 8}
+      - {start: "15:30", end: "22:30", headway_minutes: 5}
+    A3-41: [{start: "04:45", end: "22:41", headway_minutes: 12}]
+    A5-1:
+      - {start: "05:00", end: "08:00", headway_minutes: 8}
+      - {start: "08:00", end: "22:30", headway_minutes: 11}
+    A5-2: [{start: "05:00", end: "22:36", headway_minutes: 11}]
+    A5-3:
+      - {start: "05:00", end: "08:00", headway_minutes: 5}
+      - {start: "08:00", end: "15:00", headway_minutes: 8}
+      - {start: "15:00", end: "22:30", headway_minutes: 5}
+    A5-4:
+      - {start: "05:00", end: "15:00", headway_minutes: 11}
+      - {start: "15:00", end: "22:30", headway_minutes: 13}
+    A5-5:
+      - {start: "05:00", end: "08:00", headway_minutes: 8}
+      - {start: "08:00", end: "15:30", headway_minutes: 12}
+      - {start: "15:30", end: "22:30", headway_minutes: 8}
+    A6-5: [{start: "05:20", end: "22:30", headway_minutes: 10}]
+    A6-6: [{start: "05:00", end: "22:33", headway_minutes: 10}]
+    A7-1:
+      - {start: "05:00", end: "08:00", headway_minutes: 9}
+      - {start: "08:00", end: "16:00", headway_minutes: 12}
+      - {start: "16:00", end: "22:00", headway_minutes: 9}
+    A7-3:
+      - {start: "05:00", end: "11:00", headway_minutes: 16}
+      - {start: "11:00", end: "18:00", headway_minutes: 19}
+      - {start: "18:00", end: "22:00", headway_minutes: 15}
+    A7-4:
+      - {start: "05:00", end: "09:00", headway_minutes: 10}
+      - {start: "09:00", end: "22:00", headway_minutes: 13}
+    A8-1:
+      - {start: "05:00", end: "09:00", headway_minutes: 6}
+      - {start: "09:00", end: "15:00", headway_minutes: 12}
+      - {start: "15:00", end: "22:00", headway_minutes: 9}
+    A8-2:
+      - {start: "05:00", end: "09:00", headway_minutes: 6}
+      - {start: "09:00", end: "15:00", headway_minutes: 13}
+      - {start: "15:00", end: "22:00", headway_minutes: 6}
+    A8-3: [{start: "05:30", end: "21:26", headway_minutes: 13}]
+    A9-3:
+      - {start: "05:00", end: "09:00", headway_minutes: 6}
+      - {start: "09:00", end: "15:00", headway_minutes: 11}
+      - {start: "15:00", end: "22:00", headway_minutes: 9}
+    # Source shows 3 franja windows but only 2 frequency figures (8, 12) --
+    # confirmed by rendering the actual page (not assumed) that 12 minutes
+    # is one merged cell spanning both the 09:30-14:00 and 14:00-22:00
+    # windows, not a missing third number.
+    U30:
+      - {start: "05:00", end: "09:30", headway_minutes: 8}
+      - {start: "09:30", end: "22:00", headway_minutes: 12}
+
+sunday:
+  routes:
+    A1-2: [{start: "06:00", end: "21:16", headway_minutes: 12}]
+    A1-3: [{start: "06:00", end: "21:31", headway_minutes: 11}]
+    A1-4: [{start: "06:00", end: "21:30", headway_minutes: 13}]
+    A2-1: [{start: "06:00", end: "21:35", headway_minutes: 18}]
+    A3-1: [{start: "06:00", end: "21:35", headway_minutes: 15}]
+    A3-2: [{start: "05:30", end: "21:42", headway_minutes: 10}]
+    A3-3: [{start: "05:30", end: "21:43", headway_minutes: 9}]
+    A3-4: [{start: "05:30", end: "21:42", headway_minutes: 8}]
+    A3-41: [{start: "05:30", end: "21:41", headway_minutes: 12}]
+    A5-1: [{start: "06:00", end: "21:37", headway_minutes: 16}]
+    A5-2: [{start: "06:00", end: "21:36", headway_minutes: 9}]
+    A5-3:
+      - {start: "05:30", end: "14:30", headway_minutes: 11}
+      - {start: "14:30", end: "21:30", headway_minutes: 8}
+    A5-4: [{start: "05:30", end: "21:42", headway_minutes: 11}]
+    A5-5: [{start: "05:30", end: "21:41", headway_minutes: 12}]
+    A6-5: [{start: "06:00", end: "21:30", headway_minutes: 10}]
+    A6-6: [{start: "05:30", end: "21:32", headway_minutes: 14}]
+    A7-1:
+      - {start: "06:00", end: "15:00", headway_minutes: 15}
+      - {start: "15:00", end: "21:00", headway_minutes: 11}
+    A7-3: [{start: "06:00", end: "21:00", headway_minutes: 14}]
+    A7-4: [{start: "06:00", end: "21:00", headway_minutes: 14}]
+    A8-1:
+      - {start: "06:00", end: "15:30", headway_minutes: 12}
+      - {start: "15:30", end: "21:00", headway_minutes: 10}
+    A8-2: [{start: "06:00", end: "21:02", headway_minutes: 11}]
+    A8-3: [{start: "06:00", end: "20:24", headway_minutes: 12}]
+    A9-3:
+      - {start: "06:00", end: "15:00", headway_minutes: 12}
+      - {start: "15:00", end: "21:00", headway_minutes: 10}
+    U30:
+      - {start: "06:00", end: "15:00", headway_minutes: 17}
+      - {start: "15:00", end: "21:00", headway_minutes: 14}

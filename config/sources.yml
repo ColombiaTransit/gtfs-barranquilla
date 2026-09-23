@@ -1,0 +1,49 @@
+# Source registry for the Transmetro Barranquilla GTFS pipeline.
+#
+# Both sources below use the SAME extractor (`kind: transmetro_routes`,
+# implemented in src/gtfs_pipeline/sources/transmetro.py), which does a
+# three-step fetch per route: the listing page -> the route's own detail
+# page -> that route's public Google My Maps KML export. See the module
+# docstring there for why the KML (not the HTML) is the real data source.
+
+sources:
+  troncal_routes:
+    kind: transmetro_routes
+    system: troncal
+    description: >
+      All trunk (troncal) routes. Verified against the live site: the
+      listing page (rutas_troncales) and the B1 route's detail page +
+      KML export were inspected directly.
+    base_url: https://transmetro.gov.co
+    listing_path: /sistema/rutas_troncales/
+    output_file: troncal_routes.jsonl
+
+  alimentadora_routes:
+    kind: transmetro_routes
+    system: alimentadora
+    description: >
+      All feeder (alimentadora) routes, same extractor as troncal_routes.
+      NOT YET independently verified -- only the troncal pages have been
+      inspected so far. Assumed to share the same template (the troncal
+      page's own markup already reuses a ".map-alimentadora" class name
+      for its embed), but if `gtfsbaq fetch` fails or returns odd data for
+      this source, check the real alimentadora HTML against the selectors
+      in sources/transmetro.py first.
+    base_url: https://transmetro.gov.co
+    listing_path: /sistema/rutas_alimentadoras/
+    output_file: alimentadora_routes.jsonl
+
+# Static, hand-maintained GTFS fields that have no upstream source at all
+# (agency identity, feed timezone, feed metadata).
+static:
+  agency:
+    agency_id: transmetro
+    agency_name: "Transmetro S.A.S."
+    agency_url: "https://transmetro.gov.co"
+    agency_timezone: "America/Bogota"
+    agency_lang: es
+  feed_info:
+    feed_publisher_name: "ColombiaTransit"
+    feed_publisher_url: "https://github.com/ColombiaTransit/gtfs-barranquilla"
+    feed_lang: es
+    default_lang: es

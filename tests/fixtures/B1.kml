@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>B1</name>
+    <description/>
+    <Style id="icon-1899-DB4436-normal">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+    </Style>
+    <Style id="icon-1899-DB4436-highlight">
+      <IconStyle>
+        <color>ff3644db</color>
+        <scale>1</scale>
+        <Icon>
+          <href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+        </Icon>
+        <hotSpot x="32" xunits="pixels" y="64" yunits="insetPixels"/>
+      </IconStyle>
+      <LabelStyle>
+        <scale>1</scale>
+      </LabelStyle>
+    </Style>
+    <StyleMap id="icon-1899-DB4436">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#icon-1899-DB4436-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#icon-1899-DB4436-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="line-FF0000-5000-nodesc-normal">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>5</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="line-FF0000-5000-nodesc-highlight">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>7.5</width>
+      </LineStyle>
+      <BalloonStyle>
+        <text><![CDATA[<h3>$[name]</h3>]]></text>
+      </BalloonStyle>
+    </Style>
+    <StyleMap id="line-FF0000-5000-nodesc">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#line-FF0000-5000-nodesc-normal</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#line-FF0000-5000-nodesc-highlight</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Folder>
+      <name>B1 Barranquillita</name>
+      <Placemark>
+        <name>B-1</name>
+        <styleUrl>#line-FF0000-5000-nodesc</styleUrl>
+        <LineString>
+          <tessellate>1</tessellate>
+          <coordinates>
+            -74.799076,10.90811,0
+            -74.799023,10.914784,0
+            -74.799071,10.92334,0
+            -74.799124,10.930013,0
+            -74.799153,10.938282,0
+            -74.799651,10.946097,0
+            -74.799807,10.950062,0
+            -74.799659,10.950487,0
+            -74.799525,10.950732,0
+            -74.799062,10.951303,0
+            -74.797684,10.952409,0
+            -74.797185,10.953089,0
+            -74.794017,10.959814,0
+            -74.793276,10.961298,0
+            -74.793193,10.961761,0
+            -74.791393,10.965496,0
+            -74.790732,10.967377,0
+            -74.790423,10.967989,0
+            -74.788373,10.975054,0
+            -74.786123,10.982924,0
+            -74.784825,10.987226,0
+            -74.780473,10.986123,0
+            -74.777813,10.985773,0
+          </coordinates>
+        </LineString>
+      </Placemark>
+    </Folder>
+    <Folder>
+      <name>B1_Barranquillita_paraderos</name>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 1<br>COD_PARADA: 100<br>NOMBRE_PAR: Portal de Soledad<br>LATITUD: 10.907940999999999<br>LONGITUD: -74.800165000000007<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>1</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>100</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Portal de Soledad</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.907940999999999</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.800165000000007</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.800165,10.907941,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 2<br>COD_PARADA: 101<br>NOMBRE_PAR: Est. Pacho Galan<br>LATITUD: 10.915542000000000<br>LONGITUD: -74.799025000000000<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>2</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>101</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Pacho Galan</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.915542000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.799025000000000</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.799025,10.915542,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 3<br>COD_PARADA: 102<br>NOMBRE_PAR: Est. Pedro Ramaya<br>LATITUD: 10.921488000000000<br>LONGITUD: -74.799130000000005<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>3</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>102</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Pedro Ramaya</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.921488000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.799130000000005</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.79913,10.921488,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 4<br>COD_PARADA: 103<br>NOMBRE_PAR: Est. Joaquin Barrios Polo<br>LATITUD: 10.933248000000001<br>LONGITUD: -74.799341999999996<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>4</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>103</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Joaquin Barrios Polo</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.933248000000001</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.799341999999996</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.799342,10.933248,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 5<br>COD_PARADA: 104<br>NOMBRE_PAR: Est. Buenos Aires<br>LATITUD: 10.941818000000000<br>LONGITUD: -74.799458000000001<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>5</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>104</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Buenos Aires</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.941818000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.799458000000001</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.799458,10.941818,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 6<br>COD_PARADA: 105<br>NOMBRE_PAR: Est. La Ocho<br>LATITUD: 10.946887000000000<br>LONGITUD: -74.799651999999995<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>6</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>105</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. La Ocho</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.946887000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.799651999999995</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.799652,10.946887,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 7<br>COD_PARADA: 106<br>NOMBRE_PAR: Est. La Catorce<br>LATITUD: 10.954890000000001<br>LONGITUD: -74.796328000000003<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>7</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>106</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. La Catorce</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.954890000000001</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.796328000000003</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.796328,10.95489,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 8<br>COD_PARADA: 107<br>NOMBRE_PAR: Est. La Veintiuna<br>LATITUD: 10.960433000000000<br>LONGITUD: -74.793557000000007<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>8</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>107</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. La Veintiuna</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.960433000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.793557000000007</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.793557,10.960433,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 9<br>COD_PARADA: 108<br>NOMBRE_PAR: Est. Atlantico<br>LATITUD: 10.968719999999999<br>LONGITUD: -74.790163000000007<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>9</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>108</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Atlantico</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.968719999999999</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.790163000000007</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.790163,10.96872,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 10<br>COD_PARADA: 109<br>NOMBRE_PAR: Est. Chiquinquira<br>LATITUD: 10.977185000000000<br>LONGITUD: -74.787661999999997<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>10</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>109</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Chiquinquira</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.977185000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.787661999999997</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.787662,10.977185,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 11<br>COD_PARADA: 110<br>NOMBRE_PAR: Est. La Arenosa<br>LATITUD: 10.982117000000001<br>LONGITUD: -74.786393000000004<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>11</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>110</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. La Arenosa</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.982117000000001</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.786393000000004</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.786393,10.982117,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 12<br>COD_PARADA: 202<br>NOMBRE_PAR: Est. Barrio Abajo<br>LATITUD: 10.987297000000000<br>LONGITUD: -74.784310000000005<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>12</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>202</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Barrio Abajo</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.987297000000000</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.784310000000005</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.78431,10.987297,0
+          </coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name/>
+        <description><![CDATA[descripción: <br>COD_RUTA: 1901<br>RUTA: Ruta B1<br>SECUENCIA_: 13<br>COD_PARADA: 201<br>NOMBRE_PAR: Est. Parque Cultural del Caribe<br>LATITUD: 10.986095000000001<br>LONGITUD: -74.778672999999998<br>ESTADO: ACTIVO<br>ESTADO SE�: Bueno<br>COMENTARIO: 0]]></description>
+        <styleUrl>#icon-1899-DB4436</styleUrl>
+        <ExtendedData>
+          <Data name="descripción">
+            <value/>
+          </Data>
+          <Data name="COD_RUTA">
+            <value>1901</value>
+          </Data>
+          <Data name="RUTA">
+            <value>Ruta B1</value>
+          </Data>
+          <Data name="SECUENCIA_">
+            <value>13</value>
+          </Data>
+          <Data name="COD_PARADA">
+            <value>201</value>
+          </Data>
+          <Data name="NOMBRE_PAR">
+            <value>Est. Parque Cultural del Caribe</value>
+          </Data>
+          <Data name="LATITUD">
+            <value>10.986095000000001</value>
+          </Data>
+          <Data name="LONGITUD">
+            <value>-74.778672999999998</value>
+          </Data>
+          <Data name="ESTADO">
+            <value>ACTIVO</value>
+          </Data>
+          <Data name="ESTADO SE�">
+            <value>Bueno</value>
+          </Data>
+          <Data name="COMENTARIO">
+            <value>0</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>
+            -74.778673,10.986095,0
+          </coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>

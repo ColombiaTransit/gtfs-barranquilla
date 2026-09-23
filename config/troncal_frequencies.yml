@@ -1,0 +1,116 @@
+# Real per-route headways for trunk (troncal) routes, split by service day
+# type -- the troncal counterpart to config/alimentadora_frequencies.yml
+# (see that file's header for the general shape of this problem; this one
+# covers the other half of the system).
+#
+# SOURCES (fetched directly by this pipeline's own web-fetch step -- unlike
+# the three alimentadora PDFs, which needed the user to upload the actual
+# files because URL-fetching choked on them):
+#   weekday:  HORARIO_FUNCIONAMIENTO_TRONCAL_HABILES_10_DE_ENE_2023_d3c9bc5343.pdf
+#             "Vigente desde el Lunes 22 de Enero de 2024" (filename says "10 DE
+#             ENE 2023" -- same internal inconsistency as the alimentadora one)
+#   saturday: HORARIO_FUNCIONAMIENTO_TRONCAL_SABADO_14_DE_ENE_2023pptx_1bc812fb75.pdf
+#             "Vigente desde el Sábado 27 de Enero de 2024"
+#   sunday:   HORARIO_FUNCIONAMIENTO_TRONCAL_DOM_Y_FES_15_DE_ENE_2023_613ca9c764.pdf
+#             "Vigente desde el Domingo 28 de Enero de 2024"
+# Same one-week rollout as the alimentadora tables (22/27/28 Jan 2024).
+#
+# COVERAGE:
+#   - Troncal (trunk) routes only -- alimentadora routes are in the
+#     separate file, matched separately in frequency_reference.py.
+#   - A route/day combination not listed here keeps the placeholder
+#     headway for that day. S40's weekday entry is a deliberate exception:
+#     see the inline comment on it below for why it's sourced from a much
+#     older (2018) document rather than the three 2024 PDFs everything
+#     else here comes from. S40 has no Saturday or Sunday data from any
+#     source and stays on the placeholder for those two days.
+#
+# NOTE ON GAPS: R10 and S10 genuinely stop running for a stretch in the
+# middle of the day on weekdays and Saturdays (e.g. R10 weekday: nothing
+# between 09:30 and 11:30) -- this isn't a data error, it's represented
+# correctly simply by there being no band covering that gap.
+#
+# FORMAT: same as alimentadora_frequencies.yml -- route code (as printed in
+# the source, matched via frequency_reference.py:normalize_troncal_code) ->
+# ordered list of {start, end, headway_minutes} bands. Every band count
+# here matches its source table's window count exactly (no merged-cell
+# ambiguity like alimentadora's U30/Saturday needed resolving visually).
+
+weekday:
+  routes:
+    R10:
+      - {start: "05:00", end: "09:30", headway_minutes: 3}
+      - {start: "11:30", end: "15:30", headway_minutes: 8}
+      - {start: "15:30", end: "21:00", headway_minutes: 3}
+    R40: [{start: "05:00", end: "08:00", headway_minutes: 7}]
+    S2:
+      - {start: "05:30", end: "10:00", headway_minutes: 4}
+      - {start: "10:00", end: "15:00", headway_minutes: 7}
+      - {start: "15:00", end: "22:00", headway_minutes: 4}
+    B1:
+      - {start: "05:00", end: "09:30", headway_minutes: 4}
+      - {start: "09:30", end: "14:30", headway_minutes: 7}
+      - {start: "14:30", end: "21:30", headway_minutes: 4}
+    S1: [{start: "05:12", end: "22:00", headway_minutes: 4}]
+    R1: [{start: "05:00", end: "21:18", headway_minutes: 4}]
+    R2: [{start: "06:00", end: "19:45", headway_minutes: 17}]
+    B2: [{start: "06:15", end: "20:00", headway_minutes: 17}]
+    S10:
+      - {start: "05:30", end: "10:00", headway_minutes: 4}
+      - {start: "12:00", end: "16:00", headway_minutes: 8}
+      - {start: "16:00", end: "21:30", headway_minutes: 3}
+    # S40: no source gives a current headway at all -- the three 2024 PDFs
+    # above show it as not operating, but a separately-scraped 2026
+    # operating-window page shows a real 16:00-19:00 weekday slot with no
+    # frequency figure attached. The only headway number found anywhere
+    # for this route comes from a 2018 news article (Emisora Atlántico,
+    # "Transmetro mejora frecuencia de cuatro rutas troncales y tres
+    # alimentadoras", 12 Nov 2018) describing a fleet expansion that took
+    # S40 to a 5-minute headway during its 17:08-19:55 peak window --
+    # eight years old and almost certainly not the current number, but at
+    # the user's explicit instruction this is used as the best available
+    # figure rather than leaving S40 on the generic placeholder. The
+    # window below is the more-recently-confirmed 16:00-19:00 (not the
+    # article's own 17:08-19:55) -- only the headway itself is borrowed
+    # from 2018; the window comes from the newer source.
+    S40: [{start: "16:00", end: "19:00", headway_minutes: 5}]
+
+saturday:
+  routes:
+    R10:
+      - {start: "05:00", end: "09:00", headway_minutes: 5}
+      - {start: "11:30", end: "18:30", headway_minutes: 6}
+    R40: [{start: "05:30", end: "08:00", headway_minutes: 7}]
+    S2:
+      - {start: "05:30", end: "10:00", headway_minutes: 5}
+      - {start: "10:00", end: "12:00", headway_minutes: 9}
+      - {start: "12:00", end: "22:00", headway_minutes: 5}
+    B1:
+      - {start: "05:00", end: "09:00", headway_minutes: 5}
+      - {start: "09:00", end: "11:30", headway_minutes: 9}
+      - {start: "11:30", end: "21:30", headway_minutes: 5}
+    S1: [{start: "05:12", end: "22:00", headway_minutes: 4}]
+    R1: [{start: "05:00", end: "21:18", headway_minutes: 4}]
+    R2: [{start: "06:00", end: "19:45", headway_minutes: 17}]
+    B2: [{start: "06:15", end: "20:00", headway_minutes: 17}]
+    S10:
+      - {start: "05:30", end: "09:30", headway_minutes: 5}
+      - {start: "12:00", end: "19:00", headway_minutes: 6}
+
+sunday:
+  routes:
+    # R10, S10, R40, S40: no Sunday/holiday service at all in this table
+    R2: [{start: "07:00", end: "18:40", headway_minutes: 35}]
+    B2: [{start: "07:15", end: "18:55", headway_minutes: 35}]
+    B1:
+      - {start: "05:30", end: "14:30", headway_minutes: 11}
+      - {start: "14:30", end: "20:30", headway_minutes: 7}
+    S2:
+      - {start: "06:00", end: "15:00", headway_minutes: 11}
+      - {start: "15:00", end: "21:00", headway_minutes: 7}
+    R1:
+      - {start: "05:30", end: "14:30", headway_minutes: 7}
+      - {start: "14:30", end: "20:30", headway_minutes: 4}
+    S1:
+      - {start: "06:00", end: "15:00", headway_minutes: 7}
+      - {start: "15:00", end: "21:00", headway_minutes: 4}

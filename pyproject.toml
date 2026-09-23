@@ -1,0 +1,35 @@
+[project]
+name = "gtfs-barranquilla"
+version = "0.1.0"
+description = "Pipeline to build a GTFS feed for Transmetro (Barranquilla, Colombia) from open data and scraped sources."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "requests>=2.31",
+    "pandas>=2.2",
+    "pyyaml>=6.0",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "holidays>=0.58",       # Colombian public holidays, for calendar_dates.txt
+    "click>=8.1",          # CLI
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+gtfsbaq = "gtfs_pipeline.cli:cli"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
