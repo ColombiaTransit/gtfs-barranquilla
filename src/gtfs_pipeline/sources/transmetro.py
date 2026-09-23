@@ -18,12 +18,27 @@ Three-step fetch per system (troncal / alimentadora):
      is the real source of truth for shapes.txt and stops.txt; the HTML
      pages are only needed for metadata and to discover each route's `mid`.
 
-NOTE: this has only been verified against the troncal listing + B1 detail
-page (see the pages pasted into the conversation this was built from). The
-alimentadora pages are assumed to share the same template (the troncal
-page's own CSS already uses a shared ".map-alimentadora" class name), but
-that assumption hasn't been checked against a real alimentadora page yet --
-if `fetch(system="alimentadora")` fails, that's the first thing to check.
+FETCHING MECHANISM -- this matters and isn't the obvious choice:
+transmetro.gov.co is a client-side-rendered React app. Confirmed directly
+(a real browser's raw HTTP response, "View Source", was compared against
+what this pipeline parses): the server's actual HTTP response for every
+page is just `<div id="app"></div>` plus a `<script src="/bundle.js">` --
+the routes, tables, and schedule text that discover_routes_from_html() and
+parse_route_detail_html() parse only exist in the DOM *after* that bundle
+executes and renders it client-side. A plain `requests.get()` -- even with
+a full browser User-Agent and headers -- can only ever see that empty
+shell; it was never going to work here regardless of headers, and a
+separate 404-on-automated-requests issue on top of that made this doubly
+clear during testing (see git history for the abandoned header/warm-up
+attempts). So route pages are fetched with Playwright (a real, scriptable
+Chromium), and the resulting *rendered* HTML is handed to the same parsing
+functions that were already built and tested against real pasted DOM
+content -- those functions didn't need to change at all.
+
+The KML fetch (step 3) is NOT a Transmetro page -- it's a plain static
+file from Google's My Maps export endpoint, needs no JS execution, and
+isn't behind whatever's gating transmetro.gov.co -- so it still uses a
+plain `requests` session (self.session, from BaseSource), not Playwright.
 
 Writes one JSON object per route as JSON Lines (not per system), so
 transform/ can build routes/stops/shapes/calendar straight from this file
@@ -40,12 +55,14 @@ from urllib.parse import urljoin
 from xml.etree import ElementTree as ET
 
 from bs4 import BeautifulSoup
+from playwright.sync_api import Page, sync_playwright
 
-from .base import BaseSource
+from .base import USER_AGENT, BaseSource
 
 logger = logging.getLogger(__name__)
 
 REQUEST_DELAY_SECONDS = 1.0  # be polite -- this is a small municipal site
+PAGE_LOAD_TIMEOUT_MS = 30_000
 KML_NS = "{http://www.opengis.net/kml/2.2}"
 KML_NAMESPACES = {"kml": "http://www.opengis.net/kml/2.2"}
 MID_RE = re.compile(r"[?&]mid=([^&\"']+)")
@@ -60,44 +77,50 @@ class TransmetroRouteSource(BaseSource):
         system = self.spec.raw["system"]  # "troncal" | "alimentadora"
 
         listing_url = urljoin(base_url, listing_path)
-        route_links = self._discover_routes(listing_url)
-        logger.info("found %d %s route(s) on %s", len(route_links), system, listing_url)
 
-        records = []
-        for slug, label in route_links:
-            detail_url = urljoin(listing_url, f"{slug}/")
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
             try:
-                records.append(self._scrape_route(detail_url, slug, label, system))
-            except Exception as exc:  # noqa: BLE001 -- one bad route shouldn't kill the whole fetch
-                logger.warning("failed to scrape %s: %s", detail_url, exc)
-                records.append(
-                    {
-                        "system": system, "slug": slug, "label": label,
-                        "suspended": is_suspended(slug, label),
-                        "detour": has_detour(label),
-                        "error": str(exc),
-                    }
-                )
-            time.sleep(REQUEST_DELAY_SECONDS)
+                page = browser.new_page(user_agent=USER_AGENT)
+                route_links = self._discover_routes(page, listing_url)
+                logger.info("found %d %s route(s) on %s", len(route_links), system, listing_url)
+
+                records = []
+                for slug, label in route_links:
+                    detail_url = urljoin(listing_url, f"{slug}/")
+                    try:
+                        records.append(self._scrape_route(page, detail_url, slug, label, system))
+                    except Exception as exc:  # noqa: BLE001 -- one bad route shouldn't kill the whole fetch
+                        logger.warning("failed to scrape %s: %s", detail_url, exc)
+                        records.append(
+                            {
+                                "system": system, "slug": slug, "label": label,
+                                "suspended": is_suspended(slug, label),
+                                "detour": has_detour(label),
+                                "error": str(exc),
+                            }
+                        )
+                    time.sleep(REQUEST_DELAY_SECONDS)
+            finally:
+                browser.close()
 
         lines = "\n".join(json.dumps(r, ensure_ascii=False) for r in records)
         return self._write_text(lines)
 
-    def _discover_routes(self, listing_url: str) -> list[tuple[str, str]]:
+    def _discover_routes(self, page: Page, listing_url: str) -> list[tuple[str, str]]:
         """Returns (slug, label) for every route in the "Selecciona la ruta"
         accordion, e.g. ("a3-40-villa-sol-suspendida", "A3-4  Villa Sol").
-        Public logic factored into discover_routes_from_html() below so it
-        can be unit-tested against saved listing pages without a network
-        call.
+        Parsing logic lives in discover_routes_from_html() below, which
+        takes rendered HTML and is unit-tested against saved pages with no
+        browser involved -- this method's only job is getting that
+        rendered HTML via Playwright.
         """
-        resp = self.session.get(listing_url, timeout=30)
-        resp.raise_for_status()
-        return discover_routes_from_html(resp.text)
+        page.goto(listing_url, wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+        return discover_routes_from_html(page.content())
 
-    def _scrape_route(self, detail_url: str, slug: str, label: str, system: str) -> dict:
-        resp = self.session.get(detail_url, timeout=30)
-        resp.raise_for_status()
-        parsed = parse_route_detail_html(resp.text)
+    def _scrape_route(self, page: Page, detail_url: str, slug: str, label: str, system: str) -> dict:
+        page.goto(detail_url, wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+        parsed = parse_route_detail_html(page.content())
         parsed["route_code"] = parsed["route_code"] or label  # fall back if the page has no h2 title
 
         record = {
@@ -120,6 +143,8 @@ class TransmetroRouteSource(BaseSource):
         return record
 
     def _fetch_kml(self, mid: str) -> dict:
+        # plain requests here on purpose -- see the module docstring for why
+        # this one fetch doesn't need Playwright.
         kml_url = f"https://www.google.com/maps/d/kml?mid={mid}&forcekml=1"
         resp = self.session.get(kml_url, timeout=30)
         resp.raise_for_status()
