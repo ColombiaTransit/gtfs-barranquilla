@@ -13,6 +13,7 @@ dependencies = [
     "lxml>=5.0",
     "holidays>=0.58",       # Colombian public holidays, for calendar_dates.txt
     "click>=8.1",          # CLI
+    "playwright>=1.47",     # transmetro.gov.co is client-side-rendered -- see sources/transmetro.py
 ]
 
 [project.optional-dependencies]
