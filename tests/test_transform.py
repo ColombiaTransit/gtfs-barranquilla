@@ -74,6 +74,51 @@ def test_build_shapes_has_one_shape_for_b1(route_jsonl):
     assert len(shapes) == 23
 
 
+def test_build_routes_cleans_embedded_newlines_from_recorrido_text(tmp_path):
+    """A real MobilityData gtfs-validator run against this pipeline's
+    actual output found new_line_in_value / invalid_character errors
+    traced to scraped "Recorrido" prose -- this pins the fix down against
+    a route record shaped like what actually caused it.
+    """
+    kml_data = parse_kml(FIXTURE.read_text(encoding="utf-8"))
+    messy = {
+        "system": "troncal", "slug": "b1", "label": "B1", "suspended": False,
+        "route_code": "B1", "detail_url": "...",
+        "recorrido_text": "Servicio corriente\nque recorre\r\nla ciudad.",
+        "horario_lines": B1_HORARIO_LINES, "updated_at": None, **kml_data,
+    }
+    path = tmp_path / "troncal_routes.jsonl"
+    path.write_text(json.dumps(messy, ensure_ascii=False), encoding="utf-8")
+
+    routes = build_routes([path])
+    desc = routes.iloc[0]["route_desc"]
+    assert "\n" not in desc
+    assert "\r" not in desc
+    assert desc == "Servicio corriente que recorre la ciudad."
+
+
+def test_build_stops_drops_stops_with_empty_name_after_cleaning(tmp_path):
+    """A real gtfs-validator run found 17 missing_stop_name errors -- an
+    empty name is worse than dropping the stop entirely, since GTFS
+    requires it. This uses a route record with one stop whose name is
+    genuinely blank (whitespace-only) to pin down that it's dropped, not
+    written as an empty string.
+    """
+    kml_data = parse_kml(FIXTURE.read_text(encoding="utf-8"))
+    kml_data["stops"][0]["nombre"] = "   "  # whitespace-only, same as an empty scrape
+    route = {
+        "system": "troncal", "slug": "b1", "label": "B1", "suspended": False,
+        "route_code": "B1", "detail_url": "...",
+        "recorrido_text": "", "horario_lines": B1_HORARIO_LINES, "updated_at": None, **kml_data,
+    }
+    path = tmp_path / "troncal_routes.jsonl"
+    path.write_text(json.dumps(route, ensure_ascii=False), encoding="utf-8")
+
+    stops = build_stops([path])
+    assert len(stops) == 12  # 13 real stops in the fixture, minus the one blanked out
+    assert stops["stop_name"].isin(["", None]).sum() == 0
+
+
 def test_build_trips_creates_one_trip_per_service_window(route_jsonl):
     trips, stop_times, _frequencies = build_trips_stop_times_frequencies(route_jsonl)
     assert len(trips) == 3  # weekday, saturday, sunday
