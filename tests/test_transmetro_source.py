@@ -53,7 +53,7 @@ def test_fetch_kml_still_uses_plain_requests_not_playwright():
     source = TransmetroRouteSource(spec)
 
     fake_response = mock.Mock()
-    fake_response.text = FIXTURE.read_text(encoding="utf-8")
+    fake_response.content = FIXTURE.read_bytes()
     fake_response.raise_for_status = mock.Mock()
 
     with mock.patch.object(source.session, "get", return_value=fake_response) as mocked_get:
@@ -64,6 +64,33 @@ def test_fetch_kml_still_uses_plain_requests_not_playwright():
     assert "some_mid_value" in called_url
     assert "google.com/maps/d/kml" in called_url
     assert len(result["stops"]) == 13
+
+
+def test_fetch_kml_decodes_as_utf8_explicitly_not_requests_guess():
+    """_fetch_kml must use resp.content.decode("utf-8", ...), NOT
+    resp.text -- requests picks .text's encoding from the HTTP
+    Content-Type header (or its own guess), ignoring the KML document's
+    own `<?xml ... encoding="UTF-8"?>` declaration entirely. If requests
+    guessed wrong here, it would decode with errors='replace', which is
+    the exact mechanism that inserts U+FFFD -- a real gtfs-validator run
+    found that character in several stop names, and it was unclear
+    whether requests' guessing was the cause. This test sets .text to
+    something requests might have produced under a WRONG guessed encoding
+    (garbage) while .content holds the real correct UTF-8 bytes, so it
+    only passes if _fetch_kml genuinely reads .content, not .text.
+    """
+    spec = SourceSpec(name="test", kind="transmetro_routes", output_file="out.jsonl", raw={})
+    source = TransmetroRouteSource(spec)
+
+    fake_response = mock.Mock()
+    fake_response.content = FIXTURE.read_bytes()
+    fake_response.text = "not the real content -- would only be read on a bug"
+    fake_response.raise_for_status = mock.Mock()
+
+    with mock.patch.object(source.session, "get", return_value=fake_response):
+        result = source._fetch_kml("some_mid_value")
+
+    assert result["stops"][0]["nombre"] == "Portal de Soledad"
 
 
 def test_fetch_kml_propagates_http_errors():
@@ -79,3 +106,34 @@ def test_fetch_kml_propagates_http_errors():
             raise AssertionError("expected HTTPError to propagate")
         except requests.HTTPError:
             pass
+
+
+def test_scrape_route_survives_a_kml_404_without_losing_the_rest_of_the_record():
+    """Confirmed against a real run: a suspended route's My Maps layer can
+    404 (the layer was likely deleted once the route stopped operating).
+    That must degrade to a `kml_error` field on an otherwise-complete
+    record -- everything the route's own page scraped successfully
+    (route_code, recorrido_text, horario_lines, mid) -- not discard the
+    whole route the way letting the HTTPError propagate would.
+    """
+    spec = SourceSpec(name="test", kind="transmetro_routes", output_file="out.jsonl", raw={})
+    source = TransmetroRouteSource(spec)
+
+    fake_page = mock.MagicMock()
+    fake_page.url = "https://transmetro.gov.co/sistema/rutas_troncales/b10-suspendida/"
+
+    parsed = {
+        "route_code": "B10", "mid": "some_mid",
+        "recorrido_text": "Servicio suspendido.", "horario_lines": [], "updated_at": None,
+    }
+    with (
+        mock.patch("gtfs_pipeline.sources.transmetro.parse_route_detail_html", return_value=parsed),
+        mock.patch.object(source, "_fetch_kml", side_effect=requests.HTTPError("404 Client Error")),
+        mock.patch.object(source, "_return_to_listing"),  # not under test here
+    ):
+        record = source._scrape_route(fake_page, "b10-suspendida", "B10 (SUSPENDIDA)", "troncal")
+
+    assert record["route_code"] == "B10"
+    assert record["recorrido_text"] == "Servicio suspendido."
+    assert "404" in record["kml_error"]
+    assert "shape_coordinates" in record  # still present (empty), not just missing from a discarded record
