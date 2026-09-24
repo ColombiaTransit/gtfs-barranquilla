@@ -99,6 +99,8 @@ class TransmetroRouteSource(BaseSource):
         base_url = self.spec.raw["base_url"]
         listing_path = self.spec.raw["listing_path"]
         system = self.spec.raw["system"]  # "troncal" | "alimentadora"
+        self._base_url = base_url  # used by _recover_to_listing() if go_back() ever can't get us back
+        self._listing_path = listing_path
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -196,11 +198,16 @@ class TransmetroRouteSource(BaseSource):
         returning, but ONLY if the click actually started a navigation --
         the `navigated` flag matters here: if the click itself fails (link
         not found, timeout), nothing moved and we're already back on the
-        listing page, so go_back() would incorrectly step past it. If the
-        click succeeds but something after it fails (a slow page, a
-        parsing error), we're on the detail page and DO need go_back(), so
-        the whole click-through-parse sequence is one try/finally rather
-        than just wrapping the parsing part.
+        listing page, so go_back() would incorrectly step past it.
+
+        The return-to-listing step is delegated to _return_to_listing(),
+        which NEVER raises -- confirmed against a real run: a scrape can
+        fully succeed and then have go_back() hang/fail in this method's
+        `finally` block, and a `finally` block that raises silently
+        DISCARDS an already-successful `return record` from the `try`
+        above it, replacing it with the `finally`'s exception instead. A
+        route that scraped correctly must never be reported as a failure
+        just because navigating away from it afterward had trouble.
         """
         navigated = False
         try:
@@ -236,24 +243,45 @@ class TransmetroRouteSource(BaseSource):
             return record
         finally:
             if navigated:
-                page.go_back()
-                # back on the listing page -- confirm via the same signal
-                # _discover_routes uses, so the next route's click in the
-                # loop starts from a known-rendered state
-                page.get_by_role("button", name="Selecciona la ruta").wait_for(
-                    state="visible", timeout=PAGE_LOAD_TIMEOUT_MS
-                )
-                # CONFIRMED against a real run: the accordion's expanded
-                # state does NOT survive a go_back() -- the troncal listing
-                # page renders expanded on its very first mount, but comes
-                # back collapsed after navigating away and back (route b1
-                # scraped fine; b2 onward all failed with "element is not
-                # visible" clicking their link, because the accordion body
-                # holding every route link had silently collapsed again).
-                # _expand_accordion_if_needed() is therefore NOT a one-time
-                # setup step -- it has to run again after every go_back(),
-                # not just once when the listing page first loads.
-                self._expand_accordion_if_needed(page)
+                self._return_to_listing(page)
+
+    def _return_to_listing(self, page: Page) -> None:
+        """Gets back to a working listing page after a route detail page.
+        Never raises: any trouble here must not look like the route we
+        just scraped failed (see _scrape_route's docstring). Two layers:
+        1. The normal path -- go_back(wait_until="commit"), the lightest
+           possible wait, then confirm via the same explicit content wait
+           used everywhere else in this class. NOT the default
+           wait_until="load": confirmed against a real run that this
+           SPA's client-side history navigation can hang waiting for a
+           "load" event for ~30s, since no real page reload happens for
+           it -- "commit" only waits for the navigation to have started,
+           which is enough given the explicit wait_for() right after it.
+        2. If that still doesn't leave us on a working listing page for
+           any reason, a last-resort recovery: start over from base_url
+           and click through again, exactly like the first navigation in
+           _discover_routes(). Slower, but guarantees the NEXT route in
+           the loop still gets a clean starting state rather than
+           inheriting whatever broken state this one left behind.
+        """
+        try:
+            page.go_back(wait_until="commit", timeout=PAGE_LOAD_TIMEOUT_MS)
+            page.get_by_role("button", name="Selecciona la ruta").wait_for(
+                state="visible", timeout=PAGE_LOAD_TIMEOUT_MS
+            )
+            self._expand_accordion_if_needed(page)
+        except Exception as exc:  # noqa: BLE001 -- must not propagate, see docstring
+            logger.warning("go_back to the listing page had trouble (%s) -- recovering from base_url", exc)
+            self._recover_to_listing(page)
+
+    def _recover_to_listing(self, page: Page) -> None:
+        try:
+            page.goto(self._base_url, wait_until="domcontentloaded", timeout=PAGE_LOAD_TIMEOUT_MS)
+            page.get_by_role("button", name="Mi Sistema").wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
+            self._click_nav_link(page, self._listing_path)
+            self._expand_accordion_if_needed(page)
+        except Exception as exc:  # noqa: BLE001 -- still must not propagate; the next route's own click will fail loudly if this really didn't work
+            logger.warning("recovery navigation to the listing page also failed: %s", exc)
 
     def _fetch_kml(self, mid: str) -> dict:
         # plain requests here on purpose -- see the module docstring for why
