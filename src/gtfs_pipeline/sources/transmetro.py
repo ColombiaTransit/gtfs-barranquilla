@@ -170,10 +170,19 @@ class TransmetroRouteSource(BaseSource):
     def _expand_accordion_if_needed(self, page: Page) -> None:
         """Confirmed against real pasted HTML for both systems: the
         troncal listing page renders its "Selecciona la ruta" accordion
-        already expanded (class "show" present); the alimentadora one
-        renders it collapsed. The toggle button flips state either way, so
-        this only clicks it when the body isn't already visible, rather
-        than risking closing an already-open troncal accordion.
+        already expanded (class "show" present) on its very first mount;
+        the alimentadora one renders it collapsed. The toggle button flips
+        state either way, so this only clicks it when the body isn't
+        already visible, rather than risking closing an already-open
+        accordion.
+
+        NOT a one-time setup step: also confirmed against a real run that
+        the expanded state does NOT survive a go_back() to the listing
+        page -- even troncal's comes back collapsed after the first
+        route's back-navigation, even though it started expanded. So this
+        gets called again after every go_back() in _scrape_route(), not
+        just once from _discover_routes() when the listing page first
+        loads.
         """
         body = page.locator("#collapseOne")
         if body.count() and not body.first.is_visible():
@@ -234,6 +243,17 @@ class TransmetroRouteSource(BaseSource):
                 page.get_by_role("button", name="Selecciona la ruta").wait_for(
                     state="visible", timeout=PAGE_LOAD_TIMEOUT_MS
                 )
+                # CONFIRMED against a real run: the accordion's expanded
+                # state does NOT survive a go_back() -- the troncal listing
+                # page renders expanded on its very first mount, but comes
+                # back collapsed after navigating away and back (route b1
+                # scraped fine; b2 onward all failed with "element is not
+                # visible" clicking their link, because the accordion body
+                # holding every route link had silently collapsed again).
+                # _expand_accordion_if_needed() is therefore NOT a one-time
+                # setup step -- it has to run again after every go_back(),
+                # not just once when the listing page first loads.
+                self._expand_accordion_if_needed(page)
 
     def _fetch_kml(self, mid: str) -> dict:
         # plain requests here on purpose -- see the module docstring for why
