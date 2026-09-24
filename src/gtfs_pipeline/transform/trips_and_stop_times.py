@@ -10,8 +10,10 @@ system and day); everywhere else -- any route not present in a given day's
 matching reference table -- still uses an obviously-fake `headway_secs`
 placeholder for that day, since no source has been found.
 
-stop_times.txt uses a fixed per-stop dwell placeholder throughout: no
-inter-stop travel time source exists yet for any route.
+stop_times.txt timing within a trip is distance-aware (see travel_time.py)
+rather than a flat per-stop placeholder, but is still an ESTIMATE built
+from assumed average speeds and great-circle stop distances, not real
+travel-time/AVL data -- no source for that exists yet.
 """
 from __future__ import annotations
 
@@ -23,9 +25,9 @@ from ._routes_io import iter_routes, route_id, sorted_active_stops
 from .frequency_reference import get_bands
 from .horario import parse_horario_lines
 from .shapes import shape_id_for
+from .travel_time import stop_time_offsets_seconds
 
 PLACEHOLDER_HEADWAY_SECS = 9999  # obviously-fake; used wherever no real headway is known
-DWELL_SECONDS_PER_STOP = 60  # obviously-approximate; no inter-stop timing source yet
 
 
 def build_trips_stop_times_frequencies(
@@ -41,6 +43,7 @@ def build_trips_stop_times_frequencies(
 
         r_id = route_id(route)
         has_shape = bool(route.get("shape_coordinates"))
+        offsets = stop_time_offsets_seconds(stops, route.get("system", ""))
 
         for service_id, start_time, end_time in windows:
             trip_id = f"{r_id}_{service_id}"
@@ -50,8 +53,8 @@ def build_trips_stop_times_frequencies(
             trips_rows.append(trip)
 
             base = _time_to_seconds(start_time)
-            for seq, stop in enumerate(stops):
-                t = _seconds_to_gtfs_time(base + seq * DWELL_SECONDS_PER_STOP)
+            for seq, (stop, offset) in enumerate(zip(stops, offsets)):
+                t = _seconds_to_gtfs_time(base + offset)
                 stop_times_rows.append(
                     {
                         "trip_id": trip_id,
