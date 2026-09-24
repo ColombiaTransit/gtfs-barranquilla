@@ -21,7 +21,7 @@ def build_stops(route_jsonl_paths: list[Path]) -> pd.DataFrame:
 
     for route in iter_routes(route_jsonl_paths):
         for stop in route.get("stops", []):
-            code = stop.get("cod_parada")
+            code = clean_text_field(stop.get("cod_parada"))
             if not code or (stop.get("estado") or "").upper() != "ACTIVO":
                 continue
 
