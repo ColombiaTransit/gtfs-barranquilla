@@ -137,7 +137,15 @@ class TransmetroRouteSource(BaseSource):
         real clicks (see the module docstring for why a direct `page.goto`
         on the listing path itself 404s).
         """
-        page.goto(base_url, wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+        page.goto(base_url, wait_until="domcontentloaded", timeout=PAGE_LOAD_TIMEOUT_MS)
+        # NOT wait_until="networkidle" -- this page loads Google Analytics,
+        # AdSense, and the UserWay accessibility widget, all of which keep
+        # making background requests more or less indefinitely, so
+        # "networkidle" reliably times out here (confirmed against a real
+        # CI run) even once the actual app has long since rendered. Every
+        # wait in this class waits for a specific element instead of a
+        # network-quiescence heuristic, for the same reason.
+        page.get_by_role("button", name="Mi Sistema").wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
         self._click_nav_link(page, listing_path)
         self._expand_accordion_if_needed(page)
         return discover_routes_from_html(page.content())
@@ -154,7 +162,10 @@ class TransmetroRouteSource(BaseSource):
         link = page.locator(f'a[href^="{href_prefix}"]').first
         link.wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
         link.click()
-        page.wait_for_load_state("networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+        # confirms the client-side route actually changed and the listing
+        # page's own accordion toggle has rendered -- see the goto() above
+        # for why this isn't a wait_for_load_state("networkidle") call
+        page.get_by_role("button", name="Selecciona la ruta").wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
 
     def _expand_accordion_if_needed(self, page: Page) -> None:
         """Confirmed against real pasted HTML for both systems: the
@@ -186,7 +197,11 @@ class TransmetroRouteSource(BaseSource):
         try:
             page.locator(f'a[href*="/{slug}/"]').first.click()
             navigated = True
-            page.wait_for_load_state("networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+            # confirms the detail page actually rendered -- h2.azul-lt is
+            # the route's own title, present on every detail page (see
+            # both real fixtures); not a networkidle wait, see the
+            # _discover_routes docstring for why
+            page.locator("h2.azul-lt").wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
 
             detail_url = page.url
             parsed = parse_route_detail_html(page.content())
@@ -212,7 +227,13 @@ class TransmetroRouteSource(BaseSource):
             return record
         finally:
             if navigated:
-                page.go_back(wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+                page.go_back()
+                # back on the listing page -- confirm via the same signal
+                # _discover_routes uses, so the next route's click in the
+                # loop starts from a known-rendered state
+                page.get_by_role("button", name="Selecciona la ruta").wait_for(
+                    state="visible", timeout=PAGE_LOAD_TIMEOUT_MS
+                )
 
     def _fetch_kml(self, mid: str) -> dict:
         # plain requests here on purpose -- see the module docstring for why
