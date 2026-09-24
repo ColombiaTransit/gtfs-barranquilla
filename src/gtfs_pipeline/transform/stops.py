@@ -11,23 +11,41 @@ from pathlib import Path
 import pandas as pd
 
 from ._routes_io import iter_routes, logger
+from .text_cleaning import clean_text_field
 
 
 def build_stops(route_jsonl_paths: list[Path]) -> pd.DataFrame:
     seen: dict[str, dict] = {}
     conflicts: list[str] = []
+    empty_names: list[str] = []
 
     for route in iter_routes(route_jsonl_paths):
         for stop in route.get("stops", []):
             code = stop.get("cod_parada")
             if not code or (stop.get("estado") or "").upper() != "ACTIVO":
                 continue
-            if code in seen and seen[code]["nombre"] != stop["nombre"]:
+
+            name = clean_text_field(stop.get("nombre"))
+            if not name:
+                # a real MobilityData gtfs-validator run flagged 17 of
+                # these as `missing_stop_name` errors -- an empty name is
+                # worse than dropping the stop, since GTFS requires it
+                empty_names.append(code)
+                continue
+
+            if code in seen and seen[code]["nombre"] != name:
                 conflicts.append(
-                    f"stop {code}: {seen[code]['nombre']!r} vs {stop['nombre']!r} "
+                    f"stop {code}: {seen[code]['nombre']!r} vs {name!r} "
                     f"(seen again on route {route.get('route_code')})"
                 )
-            seen.setdefault(code, stop)
+            seen.setdefault(code, {**stop, "nombre": name})
+
+    if empty_names:
+        logger.warning(
+            "%d stop(s) had an empty/whitespace-only name after cleaning and "
+            "were dropped rather than written with a blank stop_name -- codes: %s",
+            len(empty_names), sorted(set(empty_names)),
+        )
 
     if conflicts:
         logger.warning(
