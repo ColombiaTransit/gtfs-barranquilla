@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 from ._routes_io import iter_routes, route_id, sorted_active_stops
+from .text_cleaning import clean_text_field
 
 ROUTE_TYPE_BUS = 3
 
@@ -20,14 +21,17 @@ def build_routes(route_jsonl_paths: list[Path], *, include_suspended: bool = Fal
     rows = []
     for route in iter_routes(route_jsonl_paths, include_suspended=include_suspended):
         stops = sorted_active_stops(route)
-        long_name = f"{stops[0]['nombre']} - {stops[-1]['nombre']}" if stops else ""
+        long_name = f"{clean_text_field(stops[0]['nombre'])} - {clean_text_field(stops[-1]['nombre'])}" if stops else ""
 
         rows.append(
             {
                 "route_id": route_id(route),
-                "route_short_name": route["route_code"],
+                "route_short_name": clean_text_field(route["route_code"]),
                 "route_long_name": long_name,
-                "route_desc": route.get("recorrido_text") or "",
+                # scraped prose ("Recorrido") is the source of the
+                # new_line_in_value / invalid_character errors a real
+                # gtfs-validator run found -- see text_cleaning.py
+                "route_desc": clean_text_field(route.get("recorrido_text")),
                 "route_type": ROUTE_TYPE_BUS,
             }
         )
