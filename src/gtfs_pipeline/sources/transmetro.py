@@ -78,6 +78,7 @@ import time
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page, sync_playwright
 
@@ -236,7 +237,17 @@ class TransmetroRouteSource(BaseSource):
             }
 
             if record["mid"]:
-                record.update(self._fetch_kml(record["mid"]))
+                try:
+                    record.update(self._fetch_kml(record["mid"]))
+                except requests.HTTPError as exc:
+                    # confirmed against a real run: suspended routes'
+                    # My Maps layers can 404 (likely deleted once the
+                    # route stopped operating) -- that's a real, expected
+                    # possibility for suspended routes specifically, not a
+                    # reason to discard everything else this route's page
+                    # scraped successfully (label, schedule text, etc.)
+                    logger.warning("KML fetch failed for slug=%s: %s", slug, exc)
+                    record["kml_error"] = str(exc)
             else:
                 record["kml_error"] = "no `mid` found in the route's map iframe -- no geodata for this route"
 
@@ -289,7 +300,25 @@ class TransmetroRouteSource(BaseSource):
         kml_url = f"https://www.google.com/maps/d/kml?mid={mid}&forcekml=1"
         resp = self.session.get(kml_url, timeout=30)
         resp.raise_for_status()
-        return parse_kml(resp.text)
+
+        # NOT resp.text: requests decides encoding from the HTTP
+        # Content-Type header (or its own guess when that's absent/vague),
+        # ignoring the KML document's own `<?xml ... encoding="UTF-8"?>`
+        # declaration entirely -- a well-known gotcha. If Google's response
+        # doesn't send an explicit charset and requests guesses wrong, it
+        # decodes with errors='replace', which is the exact mechanism that
+        # inserts U+FFFD -- a real gtfs-validator run found several stop
+        # names with U+FFFD where an "ñ" or a dash should be, and it was
+        # unclear whether that came from here or was already present in
+        # Google/Transmetro's stored data (no way to tell from the Unicode
+        # replacement character alone, and this pipeline can't reach
+        # google.com from its own dev sandbox to test directly). Decoding
+        # explicitly as UTF-8 -- what the document itself declares, and
+        # what KML/XML from Google actually is -- removes requests'
+        # guessing from the picture entirely. If U+FFFD still shows up
+        # after this, that's real proof it's in the raw bytes Google
+        # serves, not introduced by this fetch.
+        return parse_kml(resp.content.decode("utf-8", errors="replace"))
 
 
 def parse_route_detail_html(html: str) -> dict:
