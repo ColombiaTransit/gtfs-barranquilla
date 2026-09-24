@@ -1,13 +1,47 @@
 """Extractor for Transmetro's own route pages (troncales + alimentadoras).
 
-Three-step fetch per system (troncal / alimentadora):
+FETCHING MECHANISM -- this matters and isn't the obvious choice, and has
+gone through two wrong turns already worth knowing about before touching
+this code again:
 
-  1. The listing page (e.g. /sistema/rutas_troncales/) lists every route as
-     a link to /sistema/rutas_<system>/<slug>/, inside an accordion whose
-     label also flags suspended routes, e.g. "B10 (SUSPENDIDA)".
-  2. Each route's own detail page embeds a *public* Google My Maps layer
-     (a `mid` in the iframe src) and gives real text: an ordered,
-     human-readable stop list ("Recorrido") and actual weekday / Saturday /
+  1. First attempt: plain `requests`, even with full browser headers --
+     404'd. Looked like bot-blocking at first.
+  2. Second attempt: switched to Playwright (a real, scriptable Chromium)
+     doing `page.goto()` directly on each URL -- STILL 404'd, with the
+     exact same response every time: plain nginx, no WAF/Cloudflare
+     signature, no bot-challenge, just a literal file-not-found. That
+     ruled out bot-blocking entirely: transmetro.gov.co is a client-side-
+     rendered React app whose server has no fallback rewrite rule for its
+     own client-side routes -- `/sistema/rutas_troncales/` isn't a real
+     file, so ANY fresh, direct HTTP request to it 404s, script or real
+     browser alike. The rendered HTML pasted into the conversation this
+     was built from was captured by clicking through the site from `/`,
+     which changes the URL via the SPA's own client-side router (a
+     History API pushState) WITHOUT a new server request -- not by
+     loading that URL fresh, which is exactly what `page.goto()` does.
+
+  3. What actually works: load the site root ONLY (`base_url` itself --
+     the one path guaranteed to be a real file nginx can serve), then
+     simulate real navigation by clicking the actual `<a>` elements
+     already present in the rendered DOM, exactly like a real user would.
+     That lets the SPA's own router handle routing client-side, so no
+     further real HTTP request ever hits one of the paths nginx can't
+     serve directly. Every "page load" after the first is a Playwright
+     click + a wait for the DOM to settle, never a second `page.goto()`
+     to a deep path.
+
+The three-step fetch, updated for that constraint:
+
+  1. Load `base_url`, click through to the listing page (e.g.
+     /sistema/rutas_troncales/) via its real nav-menu link. Lists every
+     route as a link to /sistema/rutas_<system>/<slug>/, inside an
+     accordion whose label also flags suspended routes, e.g.
+     "B10 (SUSPENDIDA)".
+  2. Click through to each route's own detail page (from the listing page,
+     going `page.go_back()` between routes rather than re-navigating from
+     scratch). Each detail page embeds a *public* Google My Maps layer (a
+     `mid` in the iframe src) and gives real text: an ordered, human-
+     readable stop list ("Recorrido") and actual weekday / Saturday /
      Sunday operating windows ("Horario de rutas").
   3. That My Maps layer is itself fetchable as KML:
      https://www.google.com/maps/d/kml?mid=<mid>&forcekml=1
@@ -17,28 +51,19 @@ Three-step fetch per system (troncal / alimentadora):
      NOMBRE_PAR / LATITUD / LONGITUD / ESTADO). This KML -- not the HTML --
      is the real source of truth for shapes.txt and stops.txt; the HTML
      pages are only needed for metadata and to discover each route's `mid`.
+     Unlike steps 1-2, this fetch IS a plain, direct request (a plain
+     `requests` call, see below) since it's Google's URL, not Transmetro's
+     broken one.
 
-FETCHING MECHANISM -- this matters and isn't the obvious choice:
-transmetro.gov.co is a client-side-rendered React app. Confirmed directly
-(a real browser's raw HTTP response, "View Source", was compared against
-what this pipeline parses): the server's actual HTTP response for every
-page is just `<div id="app"></div>` plus a `<script src="/bundle.js">` --
-the routes, tables, and schedule text that discover_routes_from_html() and
-parse_route_detail_html() parse only exist in the DOM *after* that bundle
-executes and renders it client-side. A plain `requests.get()` -- even with
-a full browser User-Agent and headers -- can only ever see that empty
-shell; it was never going to work here regardless of headers, and a
-separate 404-on-automated-requests issue on top of that made this doubly
-clear during testing (see git history for the abandoned header/warm-up
-attempts). So route pages are fetched with Playwright (a real, scriptable
-Chromium), and the resulting *rendered* HTML is handed to the same parsing
-functions that were already built and tested against real pasted DOM
-content -- those functions didn't need to change at all.
+discover_routes_from_html() and parse_route_detail_html() (below) parse
+whatever rendered HTML they're handed and don't care how it arrived, so
+neither needed to change across any of this -- only the navigation
+mechanism in the class above them did.
 
-The KML fetch (step 3) is NOT a Transmetro page -- it's a plain static
-file from Google's My Maps export endpoint, needs no JS execution, and
-isn't behind whatever's gating transmetro.gov.co -- so it still uses a
-plain `requests` session (self.session, from BaseSource), not Playwright.
+The KML fetch is NOT a Transmetro page at all -- it's a plain static file
+from Google's My Maps export endpoint, needs no JS execution, and isn't
+subject to any of the above -- so it still uses a plain `requests` session
+(self.session, from BaseSource), not Playwright.
 
 Writes one JSON object per route as JSON Lines (not per system), so
 transform/ can build routes/stops/shapes/calendar straight from this file
@@ -51,7 +76,6 @@ import logging
 import re
 import time
 from pathlib import Path
-from urllib.parse import urljoin
 from xml.etree import ElementTree as ET
 
 from bs4 import BeautifulSoup
@@ -76,22 +100,19 @@ class TransmetroRouteSource(BaseSource):
         listing_path = self.spec.raw["listing_path"]
         system = self.spec.raw["system"]  # "troncal" | "alimentadora"
 
-        listing_url = urljoin(base_url, listing_path)
-
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             try:
                 page = browser.new_page(user_agent=USER_AGENT)
-                route_links = self._discover_routes(page, listing_url)
-                logger.info("found %d %s route(s) on %s", len(route_links), system, listing_url)
+                route_links = self._discover_routes(page, base_url, listing_path)
+                logger.info("found %d %s route(s) via %s", len(route_links), system, listing_path)
 
                 records = []
                 for slug, label in route_links:
-                    detail_url = urljoin(listing_url, f"{slug}/")
                     try:
-                        records.append(self._scrape_route(page, detail_url, slug, label, system))
+                        records.append(self._scrape_route(page, slug, label, system))
                     except Exception as exc:  # noqa: BLE001 -- one bad route shouldn't kill the whole fetch
-                        logger.warning("failed to scrape %s: %s", detail_url, exc)
+                        logger.warning("failed to scrape %s: %s", slug, exc)
                         records.append(
                             {
                                 "system": system, "slug": slug, "label": label,
@@ -107,40 +128,91 @@ class TransmetroRouteSource(BaseSource):
         lines = "\n".join(json.dumps(r, ensure_ascii=False) for r in records)
         return self._write_text(lines)
 
-    def _discover_routes(self, page: Page, listing_url: str) -> list[tuple[str, str]]:
+    def _discover_routes(self, page: Page, base_url: str, listing_path: str) -> list[tuple[str, str]]:
         """Returns (slug, label) for every route in the "Selecciona la ruta"
         accordion, e.g. ("a3-40-villa-sol-suspendida", "A3-4  Villa Sol").
         Parsing logic lives in discover_routes_from_html() below, which
         takes rendered HTML and is unit-tested against saved pages with no
-        browser involved -- this method's only job is getting that
-        rendered HTML via Playwright.
+        browser involved -- this method's only job is getting there via
+        real clicks (see the module docstring for why a direct `page.goto`
+        on the listing path itself 404s).
         """
-        page.goto(listing_url, wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+        page.goto(base_url, wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
+        self._click_nav_link(page, listing_path)
+        self._expand_accordion_if_needed(page)
         return discover_routes_from_html(page.content())
 
-    def _scrape_route(self, page: Page, detail_url: str, slug: str, label: str, system: str) -> dict:
-        page.goto(detail_url, wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
-        parsed = parse_route_detail_html(page.content())
-        parsed["route_code"] = parsed["route_code"] or label  # fall back if the page has no h2 title
+    def _click_nav_link(self, page: Page, href_prefix: str) -> None:
+        """The target link ("Rutas Troncales" / "Rutas Alimentadoras")
+        lives inside the "Mi Sistema" Bootstrap dropdown, hidden until that
+        toggle is clicked. Matched by accessible role+name rather than id:
+        the page reuses the same id ("navbarDropdown") across several
+        unrelated nav toggles -- a markup bug on the site itself -- so id
+        selectors are ambiguous here even though they'd normally be exact.
+        """
+        page.get_by_role("button", name="Mi Sistema").click()
+        link = page.locator(f'a[href^="{href_prefix}"]').first
+        link.wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
+        link.click()
+        page.wait_for_load_state("networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
 
-        record = {
-            "system": system,
-            "slug": slug,
-            "label": label,
-            "suspended": is_suspended(slug, label),
-            "detour": has_detour(label),
-            **parsed,
-            "detail_url": detail_url,
-            "shape_coordinates": [],
-            "stops": [],
-        }
+    def _expand_accordion_if_needed(self, page: Page) -> None:
+        """Confirmed against real pasted HTML for both systems: the
+        troncal listing page renders its "Selecciona la ruta" accordion
+        already expanded (class "show" present); the alimentadora one
+        renders it collapsed. The toggle button flips state either way, so
+        this only clicks it when the body isn't already visible, rather
+        than risking closing an already-open troncal accordion.
+        """
+        body = page.locator("#collapseOne")
+        if body.count() and not body.first.is_visible():
+            page.get_by_role("button", name="Selecciona la ruta").click()
+            body.first.wait_for(state="visible", timeout=PAGE_LOAD_TIMEOUT_MS)
 
-        if record["mid"]:
-            record.update(self._fetch_kml(record["mid"]))
-        else:
-            record["kml_error"] = "no `mid` found in the route's map iframe -- no geodata for this route"
+    def _scrape_route(self, page: Page, slug: str, label: str, system: str) -> dict:
+        """Clicks the specific route's link from the (already-open) listing
+        page -- never a direct `page.goto` to its URL, same reasoning as
+        _discover_routes. Always navigates back to the listing page before
+        returning, but ONLY if the click actually started a navigation --
+        the `navigated` flag matters here: if the click itself fails (link
+        not found, timeout), nothing moved and we're already back on the
+        listing page, so go_back() would incorrectly step past it. If the
+        click succeeds but something after it fails (a slow page, a
+        parsing error), we're on the detail page and DO need go_back(), so
+        the whole click-through-parse sequence is one try/finally rather
+        than just wrapping the parsing part.
+        """
+        navigated = False
+        try:
+            page.locator(f'a[href*="/{slug}/"]').first.click()
+            navigated = True
+            page.wait_for_load_state("networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
 
-        return record
+            detail_url = page.url
+            parsed = parse_route_detail_html(page.content())
+            parsed["route_code"] = parsed["route_code"] or label  # fall back if the page has no h2 title
+
+            record = {
+                "system": system,
+                "slug": slug,
+                "label": label,
+                "suspended": is_suspended(slug, label),
+                "detour": has_detour(label),
+                **parsed,
+                "detail_url": detail_url,
+                "shape_coordinates": [],
+                "stops": [],
+            }
+
+            if record["mid"]:
+                record.update(self._fetch_kml(record["mid"]))
+            else:
+                record["kml_error"] = "no `mid` found in the route's map iframe -- no geodata for this route"
+
+            return record
+        finally:
+            if navigated:
+                page.go_back(wait_until="networkidle", timeout=PAGE_LOAD_TIMEOUT_MS)
 
     def _fetch_kml(self, mid: str) -> dict:
         # plain requests here on purpose -- see the module docstring for why
